@@ -161,27 +161,32 @@ run_compile() {
 
   has_clean=$(mix help "${phoenix_ex}.digest.clean" 1>/dev/null 2>&1; echo $?)
 
-  if [ $has_clean = 0 ]; then
-    mkdir -p $cache_dir/phoenix-static
-    info "Restoring cached assets"
-    rsync -a -v --ignore-existing $cache_dir/phoenix-static/ priv/static
+  if [ $skip_assets = false ]; then
+
+    if [ $has_clean = 0 ]; then
+      mkdir -p $cache_dir/phoenix-static
+      info "Restoring cached assets"
+      rsync -a -v --ignore-existing $cache_dir/phoenix-static/ priv/static
+    fi
+
+    cd $assets_dir
   fi
 
-  cd $assets_dir
-
-  if [ -f $custom_compile ]; then
-    info "Running custom compile"
-    source $custom_compile 2>&1 | indent
-  else
-    info "Running default compile"
-    source ${build_pack_dir}/${compile} 2>&1 | indent
-  fi
+    if [ -f $custom_compile ]; then
+      info "Running custom compile"
+      source $custom_compile 2>&1 | indent
+    else
+      info "Running default compile"
+      source ${build_pack_dir}/${compile} 2>&1 | indent
+    fi
 
   cd $phoenix_dir
 
-  if [ $has_clean = 0 ]; then
-    info "Caching assets"
-    rsync -a --delete -v priv/static/ $cache_dir/phoenix-static
+  if [ $skip_assets = false ]; then
+    if [ $has_clean = 0 ]; then
+      info "Caching assets"
+      rsync -a --delete -v priv/static/ $cache_dir/phoenix-static
+    fi
   fi
 }
 
